@@ -100,6 +100,12 @@ function showTypingDialog() {
 			.setHeight(768);
 	SpreadsheetApp.getUi().showModalDialog(html, 'iframe');
 }
+// testeando mas...
+window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('click', (e) => {
+        console.log("Raw click registered at:", e.clientX, e.clientY);
+    });
+});
 </script>
 </body>
 </html>
