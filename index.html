@@ -100,10 +100,42 @@ function showTypingDialog() {
 			.setHeight(768);
 	SpreadsheetApp.getUi().showModalDialog(html, 'iframe');
 }
-// testeando mas...
+let isLocked = false;
+let mockCanvas = null;
+
+// 1. Mock pointer lock so the game engine allows in-game actions
+Object.defineProperty(document, 'pointerLockElement', {
+    get: function() { return isLocked ? mockCanvas : null; },
+    configurable: true
+});
+
+HTMLCanvasElement.prototype.requestPointerLock = function() {
+    mockCanvas = this;
+    isLocked = true;
+    setTimeout(() => { document.dispatchEvent(new Event('pointerlockchange')); }, 10);
+};
+
+document.exitPointerLock = function() {
+    isLocked = false;
+    mockCanvas = null;
+    setTimeout(() => { document.dispatchEvent(new Event('pointerlockchange')); }, 10);
+};
+
 window.addEventListener('DOMContentLoaded', () => {
-    window.addEventListener('click', (e) => {
-        console.log("Raw click registered at:", e.clientX, e.clientY);
+    // 2. Kill the browser context menu so right-click places blocks instead of opening a menu
+    window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    // 3. Force focus and trigger mock lock when clicking the canvas
+    window.addEventListener('mousedown', (e) => {
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            canvas.focus();
+            if (!isLocked) {
+                canvas.requestPointerLock();
+            }
+        }
     });
 });
 </script>
