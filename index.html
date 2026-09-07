@@ -103,7 +103,7 @@ function showTypingDialog() {
 let isLocked = false;
 let mockCanvas = null;
 
-// 1. Mock pointer lock so the game engine allows in-game actions
+
 Object.defineProperty(document, 'pointerLockElement', {
     get: function() { return isLocked ? mockCanvas : null; },
     configurable: true
@@ -122,18 +122,46 @@ document.exitPointerLock = function() {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 2. Kill the browser context menu so right-click places blocks instead of opening a menu
+    
     window.addEventListener('contextmenu', (e) => {
         e.preventDefault();
     });
 
-    // 3. Force focus and trigger mock lock when clicking the canvas
+    
     window.addEventListener('mousedown', (e) => {
         const canvas = document.querySelector('canvas');
         if (canvas) {
             canvas.focus();
             if (!isLocked) {
                 canvas.requestPointerLock();
+            }
+        }
+    });
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+
+    window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    document.addEventListener('pointerlockchange', () => {
+        const locked = document.pointerLockElement !== null;
+        console.log('[PointerLock] state changed, locked =', locked);
+    });
+
+    document.addEventListener('pointerlockerror', (e) => {
+        console.error('[PointerLock] request FAILED — likely blocked by iframe permissions policy', e);
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+        canvas.focus();
+
+        if (document.pointerLockElement !== canvas) {
+            const req = canvas.requestPointerLock();
+            // Some browsers return a Promise, some don't — handle both.
+            if (req && typeof req.then === 'function') {
+                req.catch(err => console.error('[PointerLock] promise rejected:', err));
             }
         }
     });
